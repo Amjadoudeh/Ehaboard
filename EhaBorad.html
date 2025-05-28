@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ehab Board</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* CSS Variables for easier theming and dark mode */
+        :root {
+            /* Google-inspired Light Mode Palette */
+            --bg-light: #F9FAFB;
+            --bg-card-light: #FFFFFF;
+            --bg-column-light: #F3F4F6;
+            --text-primary-light: #1F2937;
+            --text-secondary-light: #6B7280;
+            --border-light: #E5E7EB;
+            --shadow-light: rgba(0, 0, 0, 0.08);
+            --modal-bg-light: #FFFFFF;
+            --modal-shadow-light: rgba(0, 0, 0, 0.15);
+            --drag-over-color-light: #E8F0FE;
+            --unread-notification-bg-light: #E8F0FE;
+            --progress-bar-bg-light: #E0E0E0;
+
+            /* Google-inspired Button Colors */
+            --button-primary: #4285F4;
+            --button-primary-hover: #357AE8;
+            --button-success: #34A853;
+            --button-success-hover: #2E8B45;
+            --button-danger: #EA4335;
+            --button-danger-hover: #D03E2F;
+            --button-secondary: #9AA0A6;
+            --button-secondary-hover: #7F8489;
+            --button-purple: #8854C0;
+            --button-purple-hover: #7A49B0;
+            --button-teal: #00B8D4;
+            --button-teal-hover: #00A3BF;
+        }
+
+        html.dark {
+            /* Google-inspired Dark Mode Palette */
+            --bg-dark: #202124;
+            --bg-card-dark: #3C4043;
+            --bg-column-dark: #5F6368;
+            --text-primary-dark: #E8EAED;
+            --text-secondary-dark: #BDC1C6;
+            --border-dark: #70757A;
+            --shadow-dark: rgba(0, 0, 0, 0.4);
+            --modal-bg-dark: #3C4043;
+            --modal-shadow-dark: rgba(0, 0, 0, 0.6);
+            --drag-over-color-dark: #3B5B7E;
+            --unread-notification-bg-dark: #3B5B7E;
+            --progress-bar-bg-dark: #5F6368;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            color: var(--text-primary-light);
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        html.dark body {
+            background-color: var(--bg-dark);
+            color: var(--text-primary-dark);
+        }
+
+        #app-container {
+            background-color: var(--bg-card-light);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px var(--shadow-light);
+            padding: 20px;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            transition: background-color 0.3s ease, box-shadow 0.3s ease, background-image 0.3s ease;
+            min-height: calc(100vh - 40px);
+        }
+
+        html.dark #app-container {
+            background-color: var(--bg-card-dark);
+            box-shadow: 0 10px 30px var(--shadow-dark);
+        }
+
+        #main-header {
+            background-color: var(--bg-card-light);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow-light);
+            padding: 15px 25px;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid var(--border-light);
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        html.dark #main-header {
+            background-color: var(--bg-card-dark);
+            box-shadow: 0 4px 12px var(--shadow-dark);
+            border-color: var(--border-dark);
+        }
+
+        @media (min-width: 768px) {
+            #main-header {
+                flex-direction: row;
+                justify-content: space-between;
+            }
+        }
+
+        #kanban-board-wrapper {
+            flex-grow: 1;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            min-height: 500px;
+        }
+
+        #kanban-board {
+            display: flex;
+            gap: 16px;
+            min-height: 100%;
+            align-items: flex-start;
+            padding: 5px;
+        }
+
+        .kanban-column {
+            background-color: var(--bg-column-light);
+            border-radius: 12px;
+            padding: 15px;
+            min-width: 280px;
+            max-width: 280px;
+            flex-shrink: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-light);
+            transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        html.dark .kanban-column {
+            background-color: var(--bg-column-dark);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--border-dark);
+        }
+
+        #add-column-placeholder {
+            min-width: 280px;
+            max-width: 280px;
+            flex-shrink: 0;
+            background-color: var(--bg-column-light);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: var(--text-secondary-light);
+            font-weight: 600;
+            cursor: pointer;
+            border: 2px dashed var(--border-light);
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        html.dark #add-column-placeholder {
+            background-color: var(--bg-column-dark);
+            border-color: var(--border-dark);
+            color: var(--text-secondary-dark);
+        }
+
+        #add-column-placeholder:hover {
+            background-color: var(--bg-column-light);
+            border-color: var(--button-primary);
+            color: var(--button-primary);
+        }
+
+        html.dark #add-column-placeholder:hover {
+            background-color: var(--bg-column-dark);
+            border-color: var(--button-primary);
+            color: var(--button-primary);
+        }
+
+        .task-card {
+            background-color: var(--bg-card-light);
+            border-radius: 10px;
+            padding: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            cursor: grab;
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease, border-color 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-start;
+            border: 1px solid var(--border-light);
+            word-break: break-word;
+            position: relative;
+        }
+
+        html.dark .task-card {
+            background-color: var(--bg-card-dark);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            border: 1px solid var(--border-dark);
+        }
+
+        .task-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        html.dark .task-card:hover {
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .task-card.dragging {
+            opacity: 0.5;
+            border: 2px dashed var(--button-primary);
+        }
+
+        .task-card.done .task-text {
+            text-decoration: line-through;
+            color: var(--text-secondary-light);
+        }
+
+        html.dark .task-card.done .task-text {
+            color: var(--text-secondary-dark);
+        }
+
+        .delete-button {
+            background: none;
+            border: none;
+            color: var(--button-danger);
+            cursor: pointer;
+            font-size: 1rem;
+            opacity: 0.7;
+            transition: opacity 0.2s ease-in-out, color 0.2s ease;
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            z-index: 10;
+        }
+
+        .delete-button:hover {
+            opacity: 1;
+            color: var(--button-danger-hover);
+        }
+
+        .priority-dot {
+            display: none;
+        }
+
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+        }
+
+        .input-field {
+            padding: 10px 14px;
+            border: 1px solid var(--border-light);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.3s ease, color 0.3s ease;
+            background-color: var(--bg-card-light);
+            color: var(--text-primary-light);
+        }
+
+        html.dark .input-field {
+            background-color: var(--bg-card-dark);
+            border-color: var(--border-dark);
+            color: var(--text-primary-dark);
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--button-primary);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.25);
+        }
+
+        html.dark .input-field:focus {
+            border-color: var(--button-primary);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.4);
+        }
+
+        .action-button {
+            padding: 10px 20px;
+            background-color: var(--button-primary);
+            color: white;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out, box-shadow 0.2s ease-in-out;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-button:hover {
+            background-color: var(--button-primary-hover);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .action-button:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+
+        .action-button.bg-green-500 { background-color: var(--button-success); }
+        .action-button.bg-green-500:hover { background-color: var(--button-success-hover); }
+        .action-button.bg-red-500 { background-color: var(--button-danger); }
+        .action-button.bg-red-500:hover { background-color: var(--button-danger-hover); }
+        .action-button.bg-gray-500 { background-color: var(--button-secondary); }
+        .action-button.bg-gray-500:hover { background-color: var(--button-secondary-hover); }
+        .action-button.bg-purple-500 { background-color: var(--button-purple); }
+        .action-button.bg-purple-500:hover { background-color: var(--button-purple-hover); }
+        .action-button.bg-teal-500 { background-color: var(--button-teal); }
+        .action-button.bg-teal-500:hover { background-color: var(--button-teal-hover); }
+
+        .column-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--text-primary-light);
+            margin-bottom: 12px;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        html.dark .column-title {
+            color: var(--text-primary-dark);
+        }
+
+        #user-info-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 0;
+            padding: 0;
+            border: none;
+        }
+
+        #current-user-display-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-primary-light);
+            transition: color 0.3s ease;
+        }
+
+        html.dark #current-user-display-name {
+            color: var(--text-primary-dark);
+        }
+
+        #current-user-id {
+            display: none;
+        }
+
+        .auth-buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background-color: var(--modal-bg-light);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 12px 30px var(--modal-shadow-light);
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+            transform: translateY(-20px);
+            transition: transform 0.3s ease-in-out, background-color 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        html.dark .modal-content {
+            background-color: var(--modal-bg-dark);
+            box-shadow: 0 12px 30px var(--modal-shadow-dark);
+        }
+
+        .modal-overlay.show .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-close-button {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--text-secondary-light);
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close-button:hover {
+            color: var(--text-primary-light);
+        }
+
+        html.dark .modal-close-button {
+            color: var(--text-secondary-dark);
+        }
+
+        html.dark .modal-close-button:hover {
+            color: var(--text-primary-dark);
+        }
+
+        #message-display {
+            padding: 10px 20px;
+            font-size: 0.95rem;
+            color: white;
+            border-radius: 8px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #message-display.show {
+            opacity: 1;
+        }
+
+        #message-display.success { background-color: var(--button-success); }
+        #message-display.error { background-color: var(--button-danger); }
+        #message-display.info { background-color: var(--button-primary); }
+
+        .empty-state {
+            padding: 20px;
+            text-align: center;
+            color: var(--text-secondary-light);
+            font-size: 0.9rem;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        html.dark .empty-state {
+            color: var(--text-secondary-dark);
+        }
+
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .add-card-button-in-column {
+            background-color: var(--bg-column-light);
+            color: var(--text-secondary-light);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 6px;
+            border: none;
+        }
+
+        html.dark .add-card-button-in-column {
+            background-color: var(--bg-column-dark);
+            color: var(--text-secondary-dark);
+        }
+
+        .add-card-button-in-column:hover {
+            background-color: var(--bg-column-light);
+            color: var(--text-primary-light);
+        }
+
+        html.dark .add-card-button-in-column:hover {
+            background-color: var(--bg-column-dark);
+            color: var(--text-primary-dark);
+        }
+
+        .add-card-input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .add-card-input-container .input-field {
+            width: 100%;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border-width: 3px;
+            border-style: solid;
+            border-color: #f3f3f3 transparent #f3f3f3 transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div id="message-display" class="fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300 opacity-0"></div>
+
+    <div id="app-container" class="flex flex-col items-center md:items-start">
+        <header id="main-header" class="w-full">
+            <div class="flex items-center justify-between w-full">
+                <div class="flex items-center gap-4">
+                    <h1 class="text-2xl font-extrabold text-gray-900 dark:text-gray-100 hidden md:block">Ehab Board</h1>
+                    <select id="board-selector" class="input-field py-2 px-3 text-sm">
+                        <option value="demo-board">Demo Board</option>
+                    </select>
+                    <div class="flex gap-2">
+                        <button id="add-board-button" class="action-button bg-purple-500 hover:bg-purple-600 py-2 px-3 text-sm">
+                            <i class="fas fa-plus"></i> Board
+                        </button>
+                        <button id="rename-board-button" class="action-button bg-blue-500 hover:bg-blue-600 py-2 px-3 text-sm">
+                            <i class="fas fa-edit"></i> Board
+                        </button>
+                        <button id="delete-board-button" class="action-button bg-red-500 hover:bg-red-600 py-2 px-3 text-sm">
+                            <i class="fas fa-trash-alt"></i> Board
+                        </button>
+                    </div>
+                </div>
+
+                <div class="flex-grow mx-4 relative hidden md:block">
+                    <input type="text" id="task-search-input" placeholder="Search tasks..." class="input-field w-full pl-10 py-2">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"></i>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div id="user-info-block" class="flex items-center gap-2">
+                        <div id="user-avatar" class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">D</div>
+                        <span id="current-user-display-name" class="font-semibold">Demo User</span>
+                    </div>
+                    <button id="settings-button" class="action-button bg-gray-500 hover:bg-gray-600 py-2 px-3 text-sm">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col md:hidden w-full mt-4 gap-3">
+                <div class="relative w-full">
+                    <input type="text" id="task-search-input-mobile" placeholder="Search tasks..." class="input-field w-full pl-10 py-2">
+                    <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-gray-300"></i>
+                </div>
+                <div class="flex gap-2 w-full justify-center">
+                    <button id="add-column-button" class="action-button bg-gray-500 hover:bg-gray-600 flex-1">
+                        <i class="fas fa-plus"></i> Column
+                    </button>
+                    <button id="rename-column-button" class="action-button bg-gray-500 hover:bg-gray-600 flex-1">
+                        <i class="fas fa-edit"></i> Column
+                    </button>
+                    <button id="delete-column-button" class="action-button bg-gray-500 hover:bg-gray-600 flex-1">
+                        <i class="fas fa-trash-alt"></i> Column
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <div id="kanban-board-wrapper" class="w-full flex-grow">
+            <div id="kanban-board">
+                <!-- Columns will be dynamically generated here -->
+                <div id="add-column-placeholder">
+                    <i class="fas fa-plus mr-2"></i> Add another column
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Modals -->
+    <div id="task-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" id="task-modal-close">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Task Details</h2>
+            <div class="flex flex-col gap-4">
+                <input type="text" id="task-title-input" placeholder="Task title..." class="input-field text-xl font-bold">
+                <textarea id="task-description-input" placeholder="Add a description..." rows="4" class="input-field"></textarea>
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1">Due Date</label>
+                        <input type="date" id="task-due-date" class="input-field w-full">
+                    </div>
+                    <div class="flex-1">
+                        <label class="block text-sm font-medium mb-1">Priority</label>
+                        <select id="task-priority" class="input-field w-full">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button id="save-task-button" class="action-button bg-green-500 hover:bg-green-600">Save Task</button>
+                    <button id="delete-task-button" class="action-button bg-red-500 hover:bg-red-600">Delete Task</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="column-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" id="column-modal-close">&times;</button>
+            <h2 id="column-modal-title" class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Add Column</h2>
+            <div class="flex flex-col gap-4">
+                <input type="text" id="column-name-input" placeholder="Column name..." class="input-field">
+                <button id="save-column-button" class="action-button bg-purple-500 hover:bg-purple-600">Save Column</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <button class="modal-close-button" id="settings-modal-close">&times;</button>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-4">Settings</h2>
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center justify-between">
+                    <label class="font-medium">Dark Mode</label>
+                    <input type="checkbox" id="dark-mode-toggle" class="w-4 h-4">
+                </div>
+                <div class="flex items-center justify-between">
+                    <label class="font-medium">Show Confetti</label>
+                    <input type="checkbox" id="confetti-toggle" class="w-4 h-4" checked>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Demo data and state management
+        let currentBoardId = 'demo-board';
+        let currentTaskId = null;
+        let isEditingColumn = false;
+        let currentColumnId = null;
+        let showConfetti = true;
+
+        // Demo board data
+        let boardData = {
+            'demo-board': {
+                name: 'Demo Board',
+                columns: [
+                    { id: 'todo', name: 'To Do', order: 0 },
+                    { id: 'inprogress', name: 'In Progress', order: 1 },
+                    { id: 'review', name: 'Review', order: 2 },
+                    { id: 'done', name: 'Done', order: 3 }
+                ],
+                tasks: [
+                    {
+                        id: 'task-1',
+                        title: 'Welcome to Ehab Board!',
+                        description: 'This is a demo task. Click to edit or drag to move between columns.',
+                        status: 'todo',
+                        priority: 'medium',
+                        dueDate: '',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'task-2',
+                        title: 'Try drag and drop',
+                        description: 'Drag this task to the "In Progress" column to see the magic happen.',
+                        status: 'todo',
+                        priority: 'high',
+                        dueDate: '',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'task-3',
+                        title: 'Completed task example',
+                        description: 'This task shows how completed tasks look.',
+                        status: 'done',
+                        priority: 'low',
+                        dueDate: '',
+                        createdAt: new Date().toISOString()
+                    }
+                ]
+            }
+        };
+
+        // DOM Elements
+        const kanbanBoard = document.getElementById('kanban-board');
+        const addColumnPlaceholder = document.getElementById('add-column-placeholder');
+        const taskModal = document.getElementById('task-modal');
+        const columnModal = document.getElementById('column-modal');
+        const settingsModal = document.getElementById('settings-modal');
+        const messageDisplay = document.getElementById('message-display');
+        const confettiCanvas = document.getElementById('confetti-canvas');
+        const confettiCtx = confettiCanvas.getContext('2d');
+
+        // Utility Functions
+        function showMessage(message, type = 'info') {
+            messageDisplay.textContent = message;
+            messageDisplay.className = `fixed top-5 left-1/2 -translate-x-1/2 px-4 py-2 rounded-lg shadow-lg z-50 transition-opacity duration-300 ${type}`;
+            messageDisplay.classList.add('show');
+            
+            setTimeout(() => {
+                messageDisplay.classList.remove('show');
+            }, 3000);
+        }
+
+        function generateId() {
+            return 'id-' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Confetti Animation
+        let confettiParticles = [];
+        let animationFrameId = null;
+
+        class ConfettiParticle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.size = Math.random() * 8 + 5;
+                this.color = color;
+                this.velocity = {
+                    x: (Math.random() - 0.5) * 10,
+                    y: (Math.random() - 0.5) * 10 - 5
+                };
+                this.gravity = 0.3;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+                this.alpha = 1;
+                this.decay = 0.01;
+            }
+
+            update() {
+                this.velocity.y += this.gravity;
+                this.x += this.velocity.x;
+                this.y += this.velocity.y;
+                this.rotation += this.rotationSpeed;
+                this.alpha -= this.decay;
+            }
+
+            draw() {
+                confettiCtx.save();
+                confettiCtx.translate(this.x, this.y);
+                confettiCtx.rotate(this.rotation * Math.PI / 180);
+                confettiCtx.globalAlpha = this.alpha;
+                confettiCtx.fillStyle = this.color;
+                confettiCtx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size);
+                confettiCtx.restore();
+            }
+        }
+
+        function createConfetti(count, x, y) {
+            const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4CAF50', '#8BC34A', '#CDDC39', '#FFEB3B', '#FFC107', '#FF9800', '#FF5722'];
+            for (let i = 0; i < count; i++) {
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                confettiParticles.push(new ConfettiParticle(x, y, color));
+            }
+        }
+
+        function animateConfetti() {
+            confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+
+            for (let i = confettiParticles.length - 1; i >= 0; i--) {
+                const p = confettiParticles[i];
+                p.update();
+                p.draw();
+
+                if (p.alpha <= 0 || p.y > confettiCanvas.height + p.size) {
+                    confettiParticles.splice(i, 1);
+                }
+            }
+
+            if (confettiParticles.length > 0) {
+                animationFrameId = requestAnimationFrame(animateConfetti);
+            } else {
+                confettiCanvas.style.display = 'none';
+                animationFrameId = null;
+            }
+        }
+
+        function startConfetti() {
+            if (!showConfetti) return;
+            
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+            confettiCanvas.style.display = 'block';
+
+            const centerX = window.innerWidth / 2;
+            const centerY = window.innerHeight / 2;
+
+            createConfetti(100, centerX, centerY);
+
+            if (!animationFrameId) {
+                animationFrameId = requestAnimationFrame(animateConfetti);
+            }
+        }
+
+        // Board Management
+        function getCurrentBoard() {
+            return boardData[currentBoardId];
+        }
+
+        function renderBoard() {
+            const board = getCurrentBoard();
+            if (!board) return;
+
+            kanbanBoard.innerHTML = '';
+            
+            board.columns.sort((a, b) => a.order - b.order).forEach(column => {
+                renderColumn(column);
+            });
+
+            kanbanBoard.appendChild(addColumnPlaceholder);
+            setupDragAndDrop();
+        }
+
+        function renderColumn(column) {
+            const columnDiv = document.createElement('div');
+            columnDiv.className = 'kanban-column';
+            columnDiv.dataset.status = column.id;
+            columnDiv.innerHTML = `
+                <h2 class="column-title">${column.name}</h2>
+                <div class="column-cards flex flex-col gap-3 flex-grow">
+                    <div class="empty-state hidden">
+                        <i class="fas fa-clipboard-list"></i>
+                        <p>No tasks here yet!</p>
+                    </div>
+                </div>
+                <button class="add-card-button-in-column" data-column-id="${column.id}">
+                    <i class="fas fa-plus"></i> Add card
+                </button>
+                <div class="add-card-input-container hidden">
+                    <input type="text" placeholder="Card title..." class="input-field add-card-input">
+                    <div class="flex gap-2">
+                        <button class="action-button py-1 px-3 text-sm add-card-submit-button">Add Card</button>
+                        <button class="action-button py-1 px-3 text-sm bg-gray-400 hover:bg-gray-500 cancel-add-card-button">&times;</button>
+                    </div>
+                </div>
+            `;
+
+            kanbanBoard.appendChild(columnDiv);
+
+            // Render tasks for this column
+            const board = getCurrentBoard();
+            const tasks = board.tasks.filter(task => task.status === column.id);
+            const columnCardsContainer = columnDiv.querySelector('.column-cards');
+            
+            tasks.forEach(task => {
+                renderTask(task, columnCardsContainer);
+            });
+
+            updateEmptyState(column.id);
+
+            // Add event listeners
+            const addButton = columnDiv.querySelector('.add-card-button-in-column');
+            const inputContainer = columnDiv.querySelector('.add-card-input-container');
+            const input = columnDiv.querySelector('.add-card-input');
+            const submitButton = columnDiv.querySelector('.add-card-submit-button');
+            const cancelButton = columnDiv.querySelector('.cancel-add-card-button');
+
+            addButton.addEventListener('click', () => {
+                addButton.classList.add('hidden');
+                inputContainer.classList.remove('hidden');
+                input.focus();
+            });
+
+            cancelButton.addEventListener('click', () => {
+                addButton.classList.remove('hidden');
+                inputContainer.classList.add('hidden');
+                input.value = '';
+            });
+
+            submitButton.addEventListener('click', () => {
+                addTask(input.value.trim(), column.id);
+                input.value = '';
+                addButton.classList.remove('hidden');
+                inputContainer.classList.add('hidden');
+            });
+
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    addTask(input.value.trim(), column.id);
+                    input.value = '';
+                    addButton.classList.remove('hidden');
+                    inputContainer.classList.add('hidden');
+                }
+                if (e.key === 'Escape') {
+                    addButton.classList.remove('hidden');
+                    inputContainer.classList.add('hidden');
+                    input.value = '';
+                }
+            });
+        }
+
+        function renderTask(task, container) {
+            const taskCard = document.createElement('div');
+            taskCard.className = `task-card ${task.status === 'done' ? 'done' : ''}`;
+            taskCard.draggable = true;
+            taskCard.dataset.taskId = task.id;
+            taskCard.dataset.taskStatus = task.status;
+
+            taskCard.innerHTML = `
+                <div class="flex-grow mr-4 pt-2">
+                    <span class="task-text font-semibold text-lg">${task.title}</span>
+                    ${task.dueDate ? `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1"><i class="fas fa-calendar-alt"></i> ${task.dueDate}</div>` : ''}
+                    ${task.priority ? `<div class="text-xs text-gray-500 dark:text-gray-400"><i class="fas fa-flag"></i> ${task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}</div>` : ''}
+                </div>
+                <button class="delete-button">
+                    <i class="fas fa-trash-alt"></i>
+                </button>
+            `;
+
+            taskCard.addEventListener('click', (e) => {
+                if (!e.target.closest('.delete-button')) {
+                    openTaskModal(task.id);
+                }
+            });
+
+            taskCard.querySelector('.delete-button').addEventListener('click', (e) => {
+                e.stopPropagation();
+                deleteTask(task.id);
+            });
+
+            // Drag events
+            taskCard.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', task.id);
+                taskCard.classList.add('dragging');
+            });
+
+            taskCard.addEventListener('dragend', () => {
+                taskCard.classList.remove('dragging');
+            });
+
+            container.appendChild(taskCard);
+        }
+
+        function updateEmptyState(columnId) {
+            const columnElement = kanbanBoard.querySelector(`[data-status="${columnId}"]`);
+            if (!columnElement) return;
+
+            const columnCardsContainer = columnElement.querySelector('.column-cards');
+            const tasksInColumn = columnCardsContainer.querySelectorAll('.task-card');
+            const emptyStateDiv = columnCardsContainer.querySelector('.empty-state');
+
+            if (tasksInColumn.length === 0) {
+                emptyStateDiv.classList.remove('hidden');
+            } else {
+                emptyStateDiv.classList.add('hidden');
+            }
+        }
+
+        // Task Management
+        function addTask(title, status) {
+            if (!title) return;
+
+            const board = getCurrentBoard();
+            const newTask = {
+                id: generateId(),
+                title: title,
+                description: '',
+                status: status,
+                priority: 'medium',
+                dueDate: '',
+                createdAt: new Date().toISOString()
+            };
+
+            board.tasks.push(newTask);
+            renderBoard();
+            showMessage('Task added successfully!', 'success');
+        }
+
+        function updateTask(taskId, updates) {
+            const board = getCurrentBoard();
+            const taskIndex = board.tasks.findIndex(task => task.id === taskId);
+            
+            if (taskIndex !== -1) {
+                const oldStatus = board.tasks[taskIndex].status;
+                board.tasks[taskIndex] = { ...board.tasks[taskIndex], ...updates };
+                
+                if (updates.status && updates.status !== oldStatus && updates.status === 'done') {
+                    startConfetti();
+                    showMessage('Congratulations! Task completed!', 'success');
+                }
+                
+                renderBoard();
+                showMessage('Task updated successfully!', 'success');
+            }
+        }
+
+        function deleteTask(taskId) {
+            const board = getCurrentBoard();
+            board.tasks = board.tasks.filter(task => task.id !== taskId);
+            renderBoard();
+            showMessage('Task deleted successfully!', 'info');
+        }
+
+        function getTask(taskId) {
+            const board = getCurrentBoard();
+            return board.tasks.find(task => task.id === taskId);
+        }
+
+        // Column Management
+        function addColumn(name) {
+            if (!name) return;
+
+            const board = getCurrentBoard();
+            const newColumn = {
+                id: generateId(),
+                name: name,
+                order: board.columns.length
+            };
+
+            board.columns.push(newColumn);
+            renderBoard();
+            showMessage('Column added successfully!', 'success');
+        }
+
+        function updateColumn(columnId, name) {
+            const board = getCurrentBoard();
+            const column = board.columns.find(col => col.id === columnId);
+            
+            if (column) {
+                column.name = name;
+                renderBoard();
+                showMessage('Column updated successfully!', 'success');
+            }
+        }
+
+        function deleteColumn(columnId) {
+            const board = getCurrentBoard();
+            
+            // Move tasks to first column
+            if (board.columns.length > 1) {
+                const firstColumn = board.columns.find(col => col.id !== columnId);
+                board.tasks.forEach(task => {
+                    if (task.status === columnId) {
+                        task.status = firstColumn.id;
+                    }
+                });
+            }
+
+            board.columns = board.columns.filter(col => col.id !== columnId);
+            renderBoard();
+            showMessage('Column deleted successfully!', 'info');
+        }
+
+        // Drag and Drop
+        function setupDragAndDrop() {
+            const columns = kanbanBoard.querySelectorAll('.kanban-column');
+            
+            columns.forEach(column => {
+                column.addEventListener('dragover', handleDragOver);
+                column.addEventListener('dragleave', handleDragLeave);
+                column.addEventListener('drop', handleDrop);
+            });
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            const column = e.currentTarget;
+            column.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--drag-over-color-light');
+        }
+
+        function handleDragLeave(e) {
+            const column = e.currentTarget;
+            column.style.backgroundColor = '';
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const column = e.currentTarget;
+            column.style.backgroundColor = '';
+
+            const taskId = e.dataTransfer.getData('text/plain');
+            const newStatus = column.dataset.status;
+
+            if (taskId && newStatus) {
+                updateTask(taskId, { status: newStatus });
+            }
+        }
+
+        // Modal Management
+        function openTaskModal(taskId = null) {
+            currentTaskId = taskId;
+            const task = taskId ? getTask(taskId) : null;
+
+            document.getElementById('task-title-input').value = task ? task.title : '';
+            document.getElementById('task-description-input').value = task ? task.description : '';
+            document.getElementById('task-due-date').value = task ? task.dueDate : '';
+            document.getElementById('task-priority').value = task ? task.priority : 'medium';
+
+            taskModal.classList.add('show');
+        }
+
+        function closeTaskModal() {
+            taskModal.classList.remove('show');
+            currentTaskId = null;
+        }
+
+        function openColumnModal(columnId = null) {
+            isEditingColumn = !!columnId;
+            currentColumnId = columnId;
+
+            const board = getCurrentBoard();
+            const column = columnId ? board.columns.find(col => col.id === columnId) : null;
+
+            document.getElementById('column-modal-title').textContent = isEditingColumn ? 'Edit Column' : 'Add Column';
+            document.getElementById('column-name-input').value = column ? column.name : '';
+
+            columnModal.classList.add('show');
+        }
+
+        function closeColumnModal() {
+            columnModal.classList.remove('show');
+            isEditingColumn = false;
+            currentColumnId = null;
+        }
+
+        function openSettingsModal() {
+            document.getElementById('dark-mode-toggle').checked = document.documentElement.classList.contains('dark');
+            document.getElementById('confetti-toggle').checked = showConfetti;
+            settingsModal.classList.add('show');
+        }
+
+        function closeSettingsModal() {
+            settingsModal.classList.remove('show');
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            renderBoard();
+
+            // Task Modal Events
+            document.getElementById('task-modal-close').addEventListener('click', closeTaskModal);
+            document.getElementById('save-task-button').addEventListener('click', () => {
+                const title = document.getElementById('task-title-input').value.trim();
+                const description = document.getElementById('task-description-input').value.trim();
+                const dueDate = document.getElementById('task-due-date').value;
+                const priority = document.getElementById('task-priority').value;
+
+                if (!title) {
+                    showMessage('Please enter a task title', 'error');
+                    return;
+                }
+
+                if (currentTaskId) {
+                    updateTask(currentTaskId, { title, description, dueDate, priority });
+                } else {
+                    const newTask = {
+                        id: generateId(),
+                        title,
+                        description,
+                        status: 'todo',
+                        priority,
+                        dueDate,
+                        createdAt: new Date().toISOString()
+                    };
+                    getCurrentBoard().tasks.push(newTask);
+                    renderBoard();
+                    showMessage('Task created successfully!', 'success');
+                }
+
+                closeTaskModal();
+            });
+
+            document.getElementById('delete-task-button').addEventListener('click', () => {
+                if (currentTaskId && confirm('Are you sure you want to delete this task?')) {
+                    deleteTask(currentTaskId);
+                    closeTaskModal();
+                }
+            });
+
+            // Column Modal Events
+            document.getElementById('column-modal-close').addEventListener('click', closeColumnModal);
+            document.getElementById('save-column-button').addEventListener('click', () => {
+                const name = document.getElementById('column-name-input').value.trim();
+                
+                if (!name) {
+                    showMessage('Please enter a column name', 'error');
+                    return;
+                }
+
+                if (isEditingColumn) {
+                    updateColumn(currentColumnId, name);
+                } else {
+                    addColumn(name);
+                }
+
+                closeColumnModal();
+            });
+
+            // Settings Modal Events
+            document.getElementById('settings-modal-close').addEventListener('click', closeSettingsModal);
+            document.getElementById('dark-mode-toggle').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+            document.getElementById('confetti-toggle').addEventListener('change', (e) => {
+                showConfetti = e.target.checked;
+            });
+
+            // Header Button Events
+            document.getElementById('add-board-button').addEventListener('click', () => {
+                const name = prompt('Enter board name:');
+                if (name) {
+                    showMessage(`Board "${name}" created (demo mode)`, 'info');
+                }
+            });
+
+            document.getElementById('rename-board-button').addEventListener('click', () => {
+                const name = prompt('Enter new board name:', getCurrentBoard().name);
+                if (name) {
+                    getCurrentBoard().name = name;
+                    showMessage(`Board renamed to "${name}"`, 'success');
+                }
+            });
+
+            document.getElementById('delete-board-button').addEventListener('click', () => {
+                if (confirm('Are you sure you want to delete this board?')) {
+                    showMessage('Board deleted (demo mode)', 'info');
+                }
+            });
+
+            document.getElementById('add-column-button').addEventListener('click', () => {
+                openColumnModal();
+            });
+
+            document.getElementById('rename-column-button').addEventListener('click', () => {
+                const board = getCurrentBoard();
+                if (board.columns.length === 0) {
+                    showMessage('No columns to rename', 'info');
+                    return;
+                }
+                
+                const columnName = prompt('Select column to rename:');
+                const column = board.columns.find(col => col.name.toLowerCase().includes(columnName.toLowerCase()));
+                
+                if (column) {
+                    openColumnModal(column.id);
+                } else {
+                    showMessage('Column not found', 'error');
+                }
+            });
+
+            document.getElementById('delete-column-button').addEventListener('click', () => {
+                const board = getCurrentBoard();
+                if (board.columns.length <= 1) {
+                    showMessage('Cannot delete the last column', 'error');
+                    return;
+                }
+
+                const columnName = prompt('Enter column name to delete:');
+                const column = board.columns.find(col => col.name.toLowerCase().includes(columnName.toLowerCase()));
+                
+                if (column && confirm(`Are you sure you want to delete "${column.name}"?`)) {
+                    deleteColumn(column.id);
+                }
+            });
+
+            document.getElementById('settings-button').addEventListener('click', openSettingsModal);
+
+            // Add Column Placeholder Event
+            addColumnPlaceholder.addEventListener('click', () => {
+                openColumnModal();
+            });
+
+            // Search functionality
+            const searchInputs = [
+                document.getElementById('task-search-input'),
+                document.getElementById('task-search-input-mobile')
+            ];
+
+            searchInputs.forEach(input => {
+                input.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const taskCards = kanbanBoard.querySelectorAll('.task-card');
+                    
+                    taskCards.forEach(card => {
+                        const taskText = card.querySelector('.task-text').textContent.toLowerCase();
+                        if (taskText.includes(searchTerm)) {
+                            card.style.display = 'flex';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            });
+
+            // Close modals when clicking outside
+            [taskModal, columnModal, settingsModal].forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('show');
+                    }
+                });
+            });
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    taskModal.classList.remove('show');
+                    columnModal.classList.remove('show');
+                    settingsModal.classList.remove('show');
+                }
+            });
+
+            // Window resize handler for confetti
+            window.addEventListener('resize', () => {
+                confettiCanvas.width = window.innerWidth;
+                confettiCanvas.height = window.innerHeight;
+            });
+
+            showMessage('Welcome to Ehab Board! This is a demo version.', 'success');
+        });
+    </script>
+</body>
+</html>
